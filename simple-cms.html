@@ -1,11 +1,11 @@
 <template name="SimpleCMS">
     {{#if canEdit }}
-        original
+
         <div data-editable data-id="{{id}}" class="simple-cms-live">
             {{{html}}}
         </div>
     {{else}}
-        cached
+
         <div  class="simple-cms-cached">
             {{>Template.dynamic template=id}}
         </div>

@@ -1,11 +1,11 @@
-#Simple Content Management System
-###For Meteor Apps
+# Simple Content Management System
+### For Meteor Apps
 
-##Quick Start
-###Install:
+## Quick Start
+### Install:
     //in terminal
     $ meteor add cesarve:simple-cms
-###Basic Usage:
+### Basic Usage:
     //in client template
     {{>SimpleCMS id="uniqueId"}}
 
@@ -23,8 +23,8 @@
 
     Control who users can update content thru a custom function
 
-##API
-###SimpleCMS.voter property
+## API
+### SimpleCMS.voter property
 Client and server side function.
 On server return if is allowed to update content
 On client return true to make regions editable or not
@@ -47,7 +47,7 @@ Example:
             return isDemoSite() ? false : true
     }
 
-##SimpleCMS.addStyle(title, selector, tags) method
+## SimpleCMS.addStyle(title, selector, tags) method
 Add existents styles for apply to contents. see [http://getcontenttools.com/getting-started#configure-styles]
 
 Receive 3 arguments:
@@ -75,7 +75,7 @@ Example:
         font-size: 36px
     }
     
-##SimpleCMS.setConfig(key, value) method
+## SimpleCMS.setConfig(key, value) method
 
 Write or overwrite a key, value config see: http://getcontenttools.com/api/content-tools#settings
 
