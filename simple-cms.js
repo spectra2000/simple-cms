@@ -66,7 +66,6 @@ class SimpleCms {
      * @param fn
      */
     set voter(fn) {
-        //console.log('setting voter', fn)
         if (typeof fn != "function") {
             throw new Meteor.Error('canEdit should to be a function')
         }
@@ -192,7 +191,6 @@ if (Meteor.isClient) {
     )
     Template.SimpleCMS.helpers({
         html: function () {
-            console.log('Template.SimpleCMS.helpers', this.id)
             let content = SimpleCMS.Contents.findOne(this.id)
 
             if (content) {
