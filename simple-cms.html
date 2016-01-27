@@ -1,0 +1,14 @@
+<template name="SimpleCMS">
+    {{canEdit}}
+    {{#if canEdit }}
+        <div data-editable data-id="{{id}}">
+            {{{html}}}
+        </div>
+    {{else}}
+        <div data-editable data-id="{{id}}">
+            {{>Template.dynamic template=id  }}
+        </div>
+    {{/if}}
+</template>
+
+
