@@ -1,6 +1,5 @@
 class SimpleCms {
     constructor() {
-
         this._content = new Mongo.Collection('simplecmscontents')
         /**
          * function return if a doc can be edited
@@ -39,7 +38,7 @@ class SimpleCms {
      * @type {string}
      */
     static get defaultContent() {
-        return '<h1>Edit Please ! ! !</h1>'
+        return '<h1>Please Edit !!!</h1><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>'
     }
 
     /**
@@ -67,7 +66,7 @@ class SimpleCms {
      * @param fn
      */
     set voter(fn) {
-        console.log('setting voter', fn)
+        //console.log('setting voter', fn)
         if (typeof fn != "function") {
             throw new Meteor.Error('canEdit should to be a function')
         }
@@ -108,113 +107,116 @@ SimpleCMS = new SimpleCms()
 
 if (Meteor.isClient) {
 
+    Template.SimpleCMS.onCreated(function () {
+        Session.setDefault('SimpleCMS.created-template', 0)
+        Session.setDefault('SimpleCMS.rendered-template', 0)
+        Session.set('SimpleCMS.created-template', Session.get('SimpleCMS.created-template') + 1)
+
+    })
+    Template.SimpleCMS.onDestroyed(function () {
+        Session.setDefault('SimpleCMS.created-template', 0)
+        Session.setDefault('SimpleCMS.rendered-template', 0)
+    })
+
+    var activeEditor = ()=> {
+        let editor
+        for (let key in SimpleCMS.configs) {
+            ContentTools[key] = SimpleCMS.configs[key]
+        }
+
+        for (let index in   SimpleCMS.styles) {
+            let stylesList = ContentTools.StylePalette.styles()
+            if (!_.indexOf(stylesList, SimpleCMS.styles[index]) >= 0)
+                ContentTools.StylePalette.add(SimpleCMS.styles[index])
+        }
+        /**
+         * init editor
+         */
+        editor = ContentTools.EditorApp.get();
+        editor.init('*[data-editable]', 'data-id');
+        editor.unbind('save')
+        editor.bind('save', function (regions) {
+            this.busy(true);
+            Meteor.call('SimpleCMS.Save', regions, function (err, res) {
+                editor.busy(false);
+                if (err) {
+                    console.log(err)
+                    new ContentTools.FlashUI('no');
+                }
+
+                if (res) {
+                    console.log(res)
+                    new ContentTools.FlashUI('ok');
+                }
+
+            })
+        });
+        return editor
+    }
+    Template.SimpleCMS.onRendered(function () {
+            Session.set('SimpleCMS.rendered-template', Session.get('SimpleCMS.rendered-template') + 1)
+            let editor;
+            let sub
+            this.autorun(()=> {
+                if (SimpleCMS.canEdit(Meteor.userId()))
+                    sub=this.subscribe(SimpleCms.pubSubName, this.data.id)
+                //If is the last  SimpleCMS template rendered
+                if (Session.get('SimpleCMS.created-template') == Session.get('SimpleCMS.rendered-template')) {
+                    //on login
+                    if (SimpleCMS.canEdit(Meteor.userId()))
+                        Meteor.setTimeout(()=> {
+                            console.log('edit mode')
+                            editor=activeEditor()
+                        }, 100)
+
+                    //on logout
+                    if (!SimpleCMS.canEdit(Meteor.userId()) && editor)
+                        editor.destroy()
+                }
+            })
+            this.autorun(()=> {
+                if (this.subscriptionsReady() && sub && sub.ready()){
+
+                    let content = SimpleCMS.Contents.findOne(this.data.id)
+                    console.log('content', this,content,sub)
+                    if (!content) {
+                        Meteor.call('SimpleCMS.New', this.data.id, this.data.html)
+                    }
+                }
+
+                //Meteor.call('SimpleCMS.New', this.data.id, this.data.html)
+            })
+
+
+        }
+    )
     Template.SimpleCMS.helpers({
-        canEdit:function(){
+        html: function () {
+            console.log('Template.SimpleCMS.helpers', this.id)
+            let content = SimpleCMS.Contents.findOne(this.id)
+
+            if (content) {
+                return content.html
+            }
+            return 'loading'
+        },
+        canEdit: function () {
             return SimpleCMS.canEdit(Meteor.userId())
         }
     })
-    Template.SimpleCMS.onCreated(function () {
-        Session.setDefault('SimpleCMS.created-template',0)
-        Session.setDefault('SimpleCMS.rendered-template',0)
-        Session.set('SimpleCMS.created-template',Session.get('SimpleCMS.created-template')+1)
-
-    })
-    Template.SimpleCMS.onDestroyed(function(){
-        Session.setDefault('SimpleCMS.created-template',0)
-        Session.setDefault('SimpleCMS.rendered-template',0)
-    })
-    Template.SimpleCMS.onRendered(function () {
-            Session.set('SimpleCMS.rendered-template',Session.get('SimpleCMS.rendered-template')+1)
-            var editor;
-            /*
-            If is the last  SimpleCMS template rendered
-             */
-            if (Session.get('SimpleCMS.created-template')==Session.get('SimpleCMS.rendered-template')){
-                console.log(Session.get('SimpleCMS.created-template'),'==',Session.get('SimpleCMS.rendered-template'))
-                this.autorun(()=> {
-                    /*
-                    if can't edit and editor exists (case: after logout)
-                     */
-                    console.log('SimpleCMS.canEdit(Meteor.userId())',SimpleCMS.canEdit(Meteor.userId()))
-                    if (!SimpleCMS.canEdit(Meteor.userId()) && editor) {
-                        editor.destroy()
-                    /*
-                    case login
-                     */
-                    } else if (SimpleCMS.canEdit(Meteor.userId())) {
-                        /**
-                         * setup editor
-                         */
-                        for (let key in SimpleCMS.configs) {
-                            ContentTools[key] = SimpleCMS.configs[key]
-                        }
-
-                        for (let index in   SimpleCMS.styles) {
-                            let stylesList = ContentTools.StylePalette.styles()
-                            if (!_.indexOf(stylesList, SimpleCMS.styles[index]) >= 0)
-                                ContentTools.StylePalette.add(SimpleCMS.styles[index])
-                        }
-                        /**
-                         * init editor
-                         */
-                        editor = ContentTools.EditorApp.get();
-                        editor.init('*[data-editable]', 'data-id');
-                        editor.unbind('save')
-                        editor.bind('save', function (regions) {
-                            this.busy(true);
-                            Meteor.call('SimpleCMS.Save', regions, function (err, res) {
-                                editor.busy(false);
-                                if (err) {
-                                    console.log(err)
-                                    new ContentTools.FlashUI('no');
-                                }
-
-                                if (res) {
-                                    console.log(res)
-                                    new ContentTools.FlashUI('ok');
-                                }
-
-                            })
-                        });
-                    }
-                })
-
-            }
-            this.autorun(()=> {
-                /**
-                 * for all templates
-                 */
-                if (SimpleCMS.canEdit(Meteor.userId())){
-                    this.subscribe(SimpleCms.pubSubName, this.data.id)
-                    if (this.subscriptionsReady()) {
-                        let content = SimpleCMS.Contents.findOne(this.data.id)
-                        if (content) {
-                            this.data.html = content.html
-                            this.$("[data-id='" + this.data.id + "']").html(this.data.html);
-                        } else {
-                            this.data.html = this.data.default || SimpleCms.defaultContent
-                            Meteor.call('SimpleCMS.New', this.data.id, this.data.html)
-                        }
-                    }
-                }
-            })
-        }
-    )
 }
 if (Meteor.isServer) {
 
     saveFile = function (blob, id, path, encoding) {
         var fs = Npm.require('fs');
-        var path = cleanPath(path),
             id = cleanName(id || 'file'), encoding = encoding || 'binary',
             chroot = process.env.PWD || 'public';
         // Clean up the path. Remove any initial and final '/' -we prefix them-,
         // any sort of attempt to go to the parent directory '..' and any empty directories in
         // between '/////' - which may happen after removing '..'
-        fs.existsSync(path) || fs.mkdirSync(path);
+
         path = chroot + (path ? '/' + path + '/' : '/');
-
-
+        fs.existsSync(path) || fs.mkdirSync(path);
 
         fs.writeFile(path + id, blob, encoding, function (err) {
             console.log(err)
@@ -225,12 +227,6 @@ if (Meteor.isServer) {
             }
         });
 
-        function cleanPath(str) {
-            if (str) {
-                return str.replace(/\.\./g, '').replace(/\/+/g, '').
-                    replace(/^\/+/, '').replace(/\/+$/, '');
-            }
-        }
 
         function cleanName(str) {
             return str.replace(/\.\./g, '').replace(/\//g, '');
@@ -251,10 +247,10 @@ if (Meteor.isServer) {
 
 
     Meteor.methods({
-        'SimpleCMS.New': function (_id, html) {
+        'SimpleCMS.New': function (_id) {
             if (!SimpleCMS.canEdit(this.userId))
                 throw new Meteor.Error(403, "Access forbidden")
-            SimpleCMS.Contents.insert({_id, html})
+            SimpleCMS.Contents.insert({_id, html: SimpleCms.defaultContent })
         },
         'SimpleCMS.Save': function (regions) {
             this.unblock()
@@ -265,7 +261,7 @@ if (Meteor.isServer) {
                 SimpleCMS.Contents.upsert({_id}, {$set: {html}})
                 html = html.replace('{{', '&#123;&#123;')
                 let body = '<template name="' + _id + '">' + html + '</template>'
-                saveFile(body, _id + '.html', 'client', 'utf8')
+                saveFile(body, _id + '.html', 'client/cache', 'utf8')
             }
 
             return true
