@@ -17,10 +17,3 @@ Package.onUse(function (api) {
     api.addFiles('simple-cms.js');
     api.export('SimpleCMS')
 });
-
-Package.onTest(function (api) {
-    api.use('ecmascript');
-    api.use('tinytest');
-    api.use('simple-cms');
-    api.addFiles('simple-cms-tests.js');
-});
