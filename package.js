@@ -2,7 +2,7 @@ Package.describe({
     name: 'cesarve:simple-cms',
     version: '0.1.0',
     // Brief, one-line summary of the package.
-    summary: 'Simple and easy content magement system CMS for Meteor Apss',
+    summary: 'Simple and easy content management system CMS for Meteor Apss',
     // URL to the Git repository containing the source code for this package.
     git: 'https://github.com/cesarve77/simple-cms',
     // By default, Meteor will default to using README.md for documentation.

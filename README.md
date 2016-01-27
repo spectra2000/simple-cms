@@ -97,4 +97,4 @@ Example:
 
 ## Demo
 
-[simplecms.meteor.com]
+[http://simplecms.meteor.com]
